@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ARGO Ocean Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="ambient ambient-c"></div>
+
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Personal Project / Ocean AI</p>
+        <h1>ARGO Ocean Assistant</h1>
+      </div>
+      <div class="topbar-meta">
+        <span class="pill" id="aiModePill">AI status loading</span>
+        <span class="pill">RAG-style retrieval</span>
+        <span class="pill">SQL planner</span>
+        <span class="pill">Interactive dashboard</span>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Conversational ocean intelligence</p>
+          <h2>Ask ARGO data questions the way a scientist explains them out loud.</h2>
+          <p class="hero-text">
+            This proof-of-concept ingests ARGO-like float profiles, stores them in SQLite, retrieves
+            metadata through a lightweight vector index, translates natural language into SQL, and
+            turns results into visual stories.
+          </p>
+          <div class="hero-actions">
+            <button class="prompt-chip" data-prompt="Show me salinity profiles near the equator in March 2023">
+              Salinity near the equator
+            </button>
+            <button class="prompt-chip" data-prompt="Compare BGC parameters in the Arabian Sea for the last 6 months">
+              BGC comparison
+            </button>
+            <button class="prompt-chip" data-prompt="What are the nearest ARGO floats to 12.5, 72.4?">
+              Nearest floats
+            </button>
+          </div>
+          <div class="hero-subgrid">
+            <article class="hero-note">
+              <span class="note-label">Coverage</span>
+              <strong id="coverageBadge">Loading basin coverage...</strong>
+              <p>Seeded Indian Ocean float network with core and BGC-style profiles across five sub-basins.</p>
+            </article>
+            <article class="hero-note">
+              <span class="note-label">Explainability</span>
+              <strong>Grounded answers, not black-box chat</strong>
+              <p>Every response shows SQL planning, retrieval context, and a visual preview of the returned data.</p>
+            </article>
+          </div>
+        </div>
+        <div class="hero-side">
+          <div class="hero-kpis" id="heroStats"></div>
+          <div class="hero-flow">
+            <p class="eyebrow">System flow</p>
+            <div class="flow-steps">
+              <div class="flow-step">
+                <span>01</span>
+                <div>
+                  <strong>Ingest</strong>
+                  <p>NetCDF-ready profile loader into structured storage.</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span>02</span>
+                <div>
+                  <strong>Retrieve</strong>
+                  <p>Metadata chunks embedded into a lightweight vector index.</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span>03</span>
+                <div>
+                  <strong>Plan</strong>
+                  <p>Natural language mapped into scoped SQL over profiles and measurements.</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span>04</span>
+                <div>
+                  <strong>Visualize</strong>
+                  <p>Map, table, trace cards, and ocean profile graphics update instantly.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="overview-ribbon">
+        <article class="ribbon-card">
+          <p class="eyebrow">Use case</p>
+          <h3>Decision-ready ocean search</h3>
+          <p>Designed so a non-technical user can ask for trends, nearest floats, or regional BGC comparisons.</p>
+        </article>
+        <article class="ribbon-card">
+          <p class="eyebrow">Data model</p>
+          <h3>Profiles + measurements + vectors</h3>
+          <p>Structured storage for numeric queries and retrieval storage for grounded language responses.</p>
+        </article>
+        <article class="ribbon-card">
+          <p class="eyebrow">Demo strength</p>
+          <h3>Resume-ready architecture</h3>
+          <p>End-to-end backend, query planner, frontend, tests, and optional NetCDF import path in one project.</p>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <div class="left-column">
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Spatial context</p>
+                <h3>Indian Ocean float field</h3>
+              </div>
+              <div class="selection-readout" id="selectionReadout">No focus point selected</div>
+            </div>
+            <div class="map-frame">
+              <svg id="oceanMap" viewBox="0 0 1000 560" aria-label="Indian Ocean map"></svg>
+              <div class="map-legend">
+                <span><i class="legend-dot core"></i> Core float</span>
+                <span><i class="legend-dot bgc"></i> BGC float</span>
+                <span><i class="legend-dot focus"></i> Selected point</span>
+              </div>
+            </div>
+            <div class="map-footer">
+              <div class="map-fact">
+                <span class="fact-label">Most recent catalog date</span>
+                <strong id="latestCatalogDate">Loading...</strong>
+              </div>
+              <div class="map-fact">
+                <span class="fact-label">Map interaction</span>
+                <strong>Click any float or basin point to inject location into the query</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Recent observations</p>
+                <h3>Latest profile feed</h3>
+              </div>
+            </div>
+            <div class="profile-feed" id="recentProfiles"></div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Result explorer</p>
+                <h3 id="resultTitle">Run a query to see the analytics layer</h3>
+              </div>
+              <pre class="sql-box" id="sqlBox">SQL will appear here after a chat request.</pre>
+            </div>
+            <div class="trace-strip" id="traceStrip">
+              <div class="trace-card">
+                <span class="trace-label">Intent</span>
+                <strong>Awaiting query</strong>
+              </div>
+              <div class="trace-card">
+                <span class="trace-label">Parameter</span>
+                <strong>Awaiting query</strong>
+              </div>
+              <div class="trace-card">
+                <span class="trace-label">Mode</span>
+                <strong>Dashboard idle</strong>
+              </div>
+            </div>
+            <div class="chart-card">
+              <svg id="profileChart" viewBox="0 0 1000 420" aria-label="Profile chart"></svg>
+            </div>
+            <div class="result-summary" id="resultSummary">
+              Use one of the prompt chips above or type your own ocean question.
+            </div>
+            <div class="insight-grid" id="insightGrid">
+              <div class="empty-state">Insights will be generated after the first successful query.</div>
+            </div>
+            <div class="result-table-wrap">
+              <table class="result-table" id="resultTable"></table>
+            </div>
+          </section>
+        </div>
+
+        <aside class="right-column">
+          <section class="panel chat-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Natural language interface</p>
+                <h3>Ocean analyst chat</h3>
+              </div>
+              <div class="chat-status" id="chatStatus">Ready</div>
+            </div>
+            <div class="chat-log" id="chatLog"></div>
+            <form id="chatForm" class="chat-form">
+              <label class="sr-only" for="chatInput">Ask a question</label>
+              <textarea
+                id="chatInput"
+                rows="4"
+                placeholder="Ask about salinity, BGC trends, trajectories, or nearest floats..."
+              ></textarea>
+              <div class="chat-actions">
+                <span class="helper-text">Click the map to pass a location hint into the query engine.</span>
+                <button type="submit" class="primary-btn">Send query</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel retrieval-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Retrieval context</p>
+                <h3>Metadata grounding</h3>
+              </div>
+            </div>
+            <div id="retrievalList" class="retrieval-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">How this answers</p>
+                <h3>Query explainability</h3>
+              </div>
+            </div>
+            <div class="explain-grid">
+              <article class="explain-card">
+                <span class="explain-step">A</span>
+                <h4>Intent detection</h4>
+                <p>Interprets whether you need profile slices, BGC comparison, trajectories, or nearest-float search.</p>
+              </article>
+              <article class="explain-card">
+                <span class="explain-step">B</span>
+                <h4>Constraint extraction</h4>
+                <p>Pulls region, time window, parameter, and optional clicked coordinates from your message.</p>
+              </article>
+              <article class="explain-card">
+                <span class="explain-step">C</span>
+                <h4>Grounded response</h4>
+                <p>Returns a natural-language answer tied to SQL results and matched metadata snippets.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Basin snapshot</p>
+                <h3>Regional coverage</h3>
+              </div>
+            </div>
+            <div id="regionGrid" class="region-grid"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

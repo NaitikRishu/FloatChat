@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: argo-ocean-assistant
+    env: docker
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: LLM_PROVIDER
+        value: huggingface
+      - key: LLM_MODEL
+        value: Qwen/Qwen2.5-7B-Instruct
+      - key: LLM_REASONING_EFFORT
+        value: low
+      - key: HF_TOKEN
+        sync: false
