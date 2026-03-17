@@ -1,48 +1,96 @@
-# ARGO Ocean Assistant
+# FloatChat: ARGO Ocean Assistant
 
-ARGO Ocean Assistant is a resume-ready ocean analytics app with a real web UI, structured storage, natural-language querying, and optional live LLM support. It is designed to feel like a real product demo rather than a notebook prototype.
+FloatChat is an AI-powered ocean analytics app for exploring ARGO float data through natural language. It combines a Python backend, structured ocean-profile storage, retrieval-based context, and a polished dashboard so users can ask ocean questions without digging through raw NetCDF files or specialist tools.
 
-## What it does
+This project was built as an end-to-end portfolio piece: not just a model demo, but a complete application with ingestion, query planning, visualization, chat, testing, and deployment.
 
-- Seeds an Indian Ocean ARGO-style catalog with:
+## Live Demo
+
+- App: [https://floatchat-argo-assistant.onrender.com](https://floatchat-argo-assistant.onrender.com)
+- Repository: [https://github.com/NaitikRishu/FloatChat](https://github.com/NaitikRishu/FloatChat)
+
+## What It Does
+
+- Seeds an Indian Ocean ARGO-style dataset with:
   - 20 floats
   - 780 profiles
   - 9,360 measurement rows
   - core and BGC-style variables
-- Stores data in SQLite and indexes metadata for retrieval.
-- Accepts natural-language questions like:
-  - `Show me salinity profiles near the equator in March 2023`
-  - `Compare BGC parameters in the Arabian Sea for the last 6 months`
-  - `What are the nearest ARGO floats to 12.5, 72.4?`
-- Shows:
-  - interactive basin map
-  - profile and comparison charts
-  - SQL trace
-  - retrieval grounding
-  - AI mode status
+- Stores structured float, profile, and measurement data in SQLite.
+- Retrieves metadata context for grounded responses.
+- Translates natural-language questions into query plans and SQL-backed results.
+- Visualizes outputs with:
+  - an interactive basin map
+  - profile charts
+  - BGC comparison views
+  - retrieval context
+  - SQL trace panels
+  - chatbot interaction
 
-## AI modes
+## Example Questions
 
-The app now supports four execution modes:
+- `Show me salinity profiles near the equator in March 2023`
+- `Compare BGC parameters in the Arabian Sea for the last 6 months`
+- `What are the nearest ARGO floats to 12.5, 72.4?`
+- `What is salinity?`
+- `What does BGC mean in Argo?`
 
-- `Hugging Face free-tier mode`
-  - recommended for a low-cost or free demo path
-  - enabled when `LLM_PROVIDER=huggingface` and `HF_TOKEN` is set
-  - uses the Hugging Face OpenAI-compatible router
-- `Ollama local-free mode`
-  - runs a local model on your machine
-  - enabled when `LLM_PROVIDER=ollama`
-  - no paid API required
-- `OpenAI live mode`
-  - still supported if you want a stronger hosted model
-  - enabled when `LLM_PROVIDER=openai` and `OPENAI_API_KEY` is set
-- `Local fallback mode`
-  - works with no API key
-  - uses the built-in rule-based planner and answer generator
+## Architecture
 
-This means the app is always runnable, but now it can use genuinely free options instead of assuming paid usage.
+### Backend
 
-## Local run
+- Python application server
+- SQLite for structured profile storage
+- deterministic demo-data generator for ARGO-like floats
+- lightweight retrieval layer for metadata matching
+- rule-based plus optional LLM-assisted query planning
+
+### Frontend
+
+- HTML, CSS, and JavaScript
+- interactive ocean map
+- profile/comparison chart rendering
+- chat-style assistant interface
+- explainability panels for SQL and retrieval
+
+### AI / Query Modes
+
+The app supports multiple runtime modes:
+
+- `Hugging Face`
+  - recommended free-tier hosted option
+- `Ollama`
+  - local free model option
+- `OpenAI`
+  - optional hosted premium model path
+- `Local fallback`
+  - no external model required
+
+If no external provider is configured, the app still works using the built-in local planner and response logic.
+
+## Project Structure
+
+```text
+argo-ocean-assistant/
+├── app/
+│   ├── database.py
+│   ├── demo_data.py
+│   ├── ingest.py
+│   ├── openai_service.py
+│   ├── query_engine.py
+│   └── server.py
+├── static/
+│   ├── app.js
+│   ├── index.html
+│   └── styles.css
+├── tests/
+│   └── test_app.py
+├── Dockerfile
+├── render.yaml
+└── main.py
+```
+
+## Run Locally
 
 ```bash
 cd "/Users/naitikrishu/Documents/New project/argo-ocean-assistant"
@@ -51,40 +99,29 @@ python3 main.py --reset
 
 Then open [http://127.0.0.1:8765](http://127.0.0.1:8765).
 
-## Run with Hugging Face free tier
+## Configure an LLM Provider
 
-Copy the env template and use the free-tier configuration:
+### Option 1: Hugging Face
 
 ```bash
 cd "/Users/naitikrishu/Documents/New project/argo-ocean-assistant"
-cp .env.example .env
 export LLM_PROVIDER="huggingface"
 export HF_TOKEN="your_huggingface_token_here"
 export LLM_MODEL="Qwen/Qwen2.5-7B-Instruct"
-export LLM_REASONING_EFFORT="low"
 python3 main.py --reset
 ```
 
-When the app boots, the top bar will show whether it is in `Hugging Face live`, `Ollama live`, or `Local fallback` mode.
-
-## Run with Ollama locally for free
-
-Start Ollama and pull a small model:
+### Option 2: Ollama
 
 ```bash
 ollama pull gemma3:4b
-```
-
-Then run the app:
-
-```bash
 cd "/Users/naitikrishu/Documents/New project/argo-ocean-assistant"
 export LLM_PROVIDER="ollama"
 export OLLAMA_MODEL="gemma3:4b"
 python3 main.py --reset
 ```
 
-## Run with OpenAI
+### Option 3: OpenAI
 
 ```bash
 cd "/Users/naitikrishu/Documents/New project/argo-ocean-assistant"
@@ -94,7 +131,7 @@ export LLM_MODEL="gpt-5-mini"
 python3 main.py --reset
 ```
 
-## Test
+## Run Tests
 
 ```bash
 cd "/Users/naitikrishu/Documents/New project/argo-ocean-assistant"
@@ -104,45 +141,44 @@ python3 -m py_compile main.py app/*.py
 
 ## Deploy
 
-### Option 1: Docker
+### Docker
 
 ```bash
 cd "/Users/naitikrishu/Documents/New project/argo-ocean-assistant"
-docker build -t argo-ocean-assistant .
+docker build -t floatchat .
 docker run -p 10000:10000 \
   -e LLM_PROVIDER="huggingface" \
   -e HF_TOKEN="your_huggingface_token_here" \
   -e LLM_MODEL="Qwen/Qwen2.5-7B-Instruct" \
-  argo-ocean-assistant
+  floatchat
 ```
 
 Then open [http://127.0.0.1:10000](http://127.0.0.1:10000).
 
-### Option 2: Render
+### Render
 
-This repo includes a ready-to-use [render.yaml](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/render.yaml) and [Dockerfile](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/Dockerfile).
+This repo already includes:
 
-Deploy steps:
+- [render.yaml](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/render.yaml)
+- [Dockerfile](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/Dockerfile)
 
-1. Push this folder to GitHub.
-2. Create a new Render web service from the repo.
-3. Render will detect `render.yaml`.
-4. Add `HF_TOKEN` in the Render environment settings.
-5. Deploy.
+Deploy flow:
 
-Important:
-- I prepared the deployment config, but I cannot complete the actual cloud deployment from this local workspace because that needs your hosting account and API credentials.
+1. Push the repo to GitHub.
+2. Create a Render web service from the repo.
+3. Add `HF_TOKEN` as a secret environment variable.
+4. Deploy.
 
-## Files worth showing on your resume or portfolio
+## Resume-Ready Highlights
+
+- Built a deployable conversational analytics platform for ARGO float data with Python, SQLite, interactive visualization, and natural-language query support.
+- Designed a grounded query workflow that combines structured execution, metadata retrieval, explainable outputs, and optional LLM assistance.
+- Shipped a full-stack portfolio app with ingestion, search, chat, charts, deployment config, and automated tests.
+
+## Key Files
 
 - App entry: [main.py](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/main.py)
 - Query engine: [app/query_engine.py](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/app/query_engine.py)
 - LLM integration: [app/openai_service.py](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/app/openai_service.py)
-- Web server: [app/server.py](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/app/server.py)
-- Frontend: [static/index.html](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/static/index.html)
-
-## Suggested resume bullets
-
-- Built a deployable ARGO ocean analytics assistant with Python, SQLite, natural-language querying, and an interactive geospatial dashboard.
-- Integrated free-tier and local LLM providers into a grounded analytics workflow for query planning and answer generation with deterministic SQL execution.
-- Designed a responsive frontend for float exploration, retrieval transparency, profile comparison, and explainable AI-assisted ocean data discovery.
+- Backend server: [app/server.py](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/app/server.py)
+- Frontend UI: [static/index.html](/Users/naitikrishu/Documents/New project/argo-ocean-assistant/static/index.html)
